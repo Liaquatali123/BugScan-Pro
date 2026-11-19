@@ -104,7 +104,7 @@ private fun BugScanApp() {
                     Text(tab + " Scanner", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                     when (tab) {
                         "CIDR" -> {
-                            InputField("Private IPv4 CIDR (maximum /24)", cidr) { cidr = it }
+                            InputField("Private IPv4 CIDR (maximum /16)", cidr) { cidr = it }
                             Text("Only RFC1918 private ranges are accepted. Parallel TCP 80/443 discovery supports /16 to /30 (up to 65,534 hosts). Works on reachable local networks; no external API required.", color = Muted, fontSize = 12.sp)
                         }
                         "HTTP" -> {
