@@ -19,26 +19,33 @@ object NetworkDiagnostics {
         val parts = input.trim().split("/")
         require(parts.size == 2) { "Enter CIDR like 192.168.1.0/24" }
         val prefix = parts[1].toIntOrNull() ?: error("Invalid prefix")
-        require(prefix in 16..30) { "Supported range: /16 through /30 (private IPv4 only)." }
+        require(prefix in 8..32) { "Supported range: /8 through /32 (private IPv4 only)." }
         val octets = parts[0].split(".").map { it.toIntOrNull() ?: error("Invalid IPv4 address") }
         require(octets.size == 4 && octets.all { it in 0..255 }) { "Invalid IPv4 address" }
 
         val first = octets.fold(0L) { acc, n -> (acc shl 8) or n.toLong() }
         val mask = (0xFFFFFFFFL shl (32 - prefix)) and 0xFFFFFFFFL
         val network = first and mask
-        val a = ((network shr 24) and 255).toInt()
-        val b = ((network shr 16) and 255).toInt()
-        val isPrivate = a == 10 || (a == 172 && b in 16..31) || (a == 192 && b == 168)
-        require(isPrivate) { "Only RFC1918 private IPv4 ranges are supported." }
-
         val count = 1L shl (32 - prefix)
-        val total = (count - 2).toInt()
+        val last = network + count - 1
+        val privateRanges = listOf(
+            0x0A000000L..0x0AFFFFFFL, // 10.0.0.0/8
+            0xAC100000L..0xAC1FFFFFL, // 172.16.0.0/12
+            0xC0A80000L..0xC0A8FFFFL  // 192.168.0.0/16
+        )
+        require(privateRanges.any { network >= it.first && last <= it.last }) {
+            "CIDR must stay entirely inside an RFC1918 private IPv4 range."
+        }
+
+        val hostStart = if (prefix <= 30) 1L else 0L
+        val hostEndExclusive = if (prefix <= 30) count - 1 else count
+        val total = (hostEndExclusive - hostStart).toInt()
         val semaphore = Semaphore(64)
         val responsive = mutableListOf<String>()
         var checked = 0
-        var offset = 1L
-        while (offset < count - 1) {
-            val end = minOf(offset + 255, count - 1)
+        var offset = hostStart
+        while (offset < hostEndExclusive) {
+            val end = minOf(offset + 255, hostEndExclusive)
             val batch = (offset until end).map { hostOffset ->
                 async(Dispatchers.IO) {
                     semaphore.withPermit {
