@@ -104,8 +104,11 @@ private fun BugScanApp() {
                     Text(tab + " Scanner", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                     when (tab) {
                         "CIDR" -> {
-                            InputField("Private IPv4 CIDR (maximum /16)", cidr) { cidr = it }
-                            Text("Only RFC1918 private ranges are accepted. Parallel TCP 80/443 discovery supports /16 to /30 (up to 65,534 hosts). Works on reachable local networks; no external API required.", color = Muted, fontSize = 12.sp)
+                            InputField("Private or Public IPv4 CIDR (/8 to /32)", cidr) { cidr = it }
+                            Text("Private ranges: /8 to /32. Public ranges: /24 or smaller only (maximum 256 addresses). Public scanning requires explicit authorization. Large public ranges are blocked for safety. TCP 80/443 checks only; no external API required.", color = Muted, fontSize = 12.sp)
+                            Surface(color = Color(0xFF3A2B16), shape = RoundedCornerShape(12.dp)) {
+                                Text("CAUTION: Scan only IP ranges you own or have written permission to test. Public IPs belong to third parties; unauthorized scanning may violate their rules or local law. Large public CIDRs such as /13 are not allowed.", color = Color(0xFFFFD18A), fontSize = 12.sp, lineHeight = 18.sp, modifier = Modifier.padding(12.dp))
+                            }
                         }
                         "HTTP" -> {
                             InputField("Hostname or URL", host) { host = it }
