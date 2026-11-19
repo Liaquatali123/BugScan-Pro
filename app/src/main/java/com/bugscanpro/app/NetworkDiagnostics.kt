@@ -33,8 +33,19 @@ object NetworkDiagnostics {
             0xAC100000L..0xAC1FFFFFL, // 172.16.0.0/12
             0xC0A80000L..0xC0A8FFFFL  // 192.168.0.0/16
         )
-        require(privateRanges.any { network >= it.first && last <= it.last }) {
-            "CIDR must stay entirely inside an RFC1918 private IPv4 range."
+        val isPrivate = privateRanges.any { network >= it.first && last <= it.last }
+        val isSpecial = listOf(
+            0x00000000L..0x00FFFFFFL, // 0.0.0.0/8
+            0x64400000L..0x647FFFFFL, // 100.64.0.0/10 shared
+            0x7F000000L..0x7FFFFFFFL, // 127.0.0.0/8 loopback
+            0xA9FE0000L..0xA9FEFFFFL, // 169.254.0.0/16 link-local
+            0xE0000000L..0xFFFFFFFFL  // multicast/reserved
+        ).any { network <= it.last && last >= it.first }
+        require(!isSpecial) { "This CIDR is reserved, loopback, link-local, multicast or otherwise non-routable." }
+        if (!isPrivate) {
+            require(count <= 256L) {
+                "Public CIDR scans are limited to /24 or smaller ranges (maximum 256 addresses). Large public ranges are blocked for safety."
+            }
         }
 
         val hostStart = if (prefix <= 30) 1L else 0L
