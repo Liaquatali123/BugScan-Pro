@@ -46,21 +46,21 @@ object NetworkDiagnostics {
                         val ip = listOf(24, 16, 8, 0).joinToString(".") { ((n shr it) and 255).toString() }
                         val p80 = probe(ip, 80)
                         val p443 = probe(ip, 443)
-                        if (p80 || p443) "$ip  |  \${if (p80) "80 OPEN" else "80 closed"}  |  \${if (p443) "443 OPEN" else "443 closed"}" else null
+                        if (p80 || p443) "$ip  |  ${if (p80) "80 OPEN" else "80 closed"}  |  ${if (p443) "443 OPEN" else "443 closed"}" else null
                     }
                 }
             }.awaitAll()
             responsive.addAll(batch.filterNotNull())
             checked += batch.size
             onProgress(
-                "CIDR: $input\\nProgress: $checked / $total (\${checked * 100 / total.coerceAtLeast(1)}%)\\nResponsive hosts: \${responsive.size}\\n\\n" +
-                    (responsive.takeLast(20).joinToString("\\n").ifBlank { "Searching private hosts…" })
+                "CIDR: $input\nProgress: $checked / $total (${checked * 100 / total.coerceAtLeast(1)}%)\nResponsive hosts: ${responsive.size}\n\n" +
+                    (responsive.takeLast(20).joinToString("\n").ifBlank { "Searching private hosts…" })
             )
             offset = end
         }
-        "CIDR: $input\\nScanned: $checked / $total hosts\\nResponsive: \${responsive.size}\\n\\n" +
-            (responsive.joinToString("\\n").ifBlank { "No hosts responded on TCP 80 or 443." }) +
-            "\\n\\nNote: This private-network scan uses no external API/data service. Results depend on local network reachability and firewall rules."
+        "CIDR: $input\nScanned: $checked / $total hosts\nResponsive: ${responsive.size}\n\n" +
+            (responsive.joinToString("\n").ifBlank { "No hosts responded on TCP 80 or 443." }) +
+            "\n\nNote: This private-network scan uses no external API/data service. Results depend on local network reachability and firewall rules."
     }
 
     private fun probe(host: String, port: Int): Boolean = runCatching {
@@ -84,9 +84,9 @@ object NetworkDiagnostics {
             val status = connection.responseCode
             val elapsed = System.currentTimeMillis() - started
             if (status == HttpURLConnection.HTTP_MOVED_TEMP) {
-                "SKIPPED: HTTP 302 redirect\\nURL: $normalized\\nTime: \${elapsed} ms"
+                "SKIPPED: HTTP 302 redirect\nURL: $normalized\nTime: ${elapsed} ms"
             } else {
-                "URL: $normalized\\nHTTP status: $status\\nMessage: \${connection.responseMessage}\\nRedirect: \${connection.getHeaderField("Location") ?: "none"}\\nTime: \${elapsed} ms\\nServer: \${connection.getHeaderField("Server") ?: "not disclosed"}"
+                "URL: $normalized\nHTTP status: $status\nMessage: ${connection.responseMessage}\nRedirect: ${connection.getHeaderField("Location") ?: "none"}\nTime: ${elapsed} ms\nServer: ${connection.getHeaderField("Server") ?: "not disclosed"}"
             }
         } finally { connection.disconnect() }
     }
@@ -106,7 +106,7 @@ object NetworkDiagnostics {
             ssl.startHandshake()
             val cert = ssl.session.peerCertificates.first()
             val elapsed = System.currentTimeMillis() - started
-            return "Host: $host\\nTLS: \${ssl.session.protocol}\\nCipher: \${ssl.session.cipherSuite}\\nCertificate: \${cert.type}\\nSubject: \${(cert as? java.security.cert.X509Certificate)?.subjectX500Principal?.name ?: "unknown"}\\nHandshake: VALID\\nTime: \${elapsed} ms"
+            return "Host: $host\nTLS: ${ssl.session.protocol}\nCipher: ${ssl.session.cipherSuite}\nCertificate: ${cert.type}\nSubject: ${(cert as? java.security.cert.X509Certificate)?.subjectX500Principal?.name ?: "unknown"}\nHandshake: VALID\nTime: ${elapsed} ms"
         }
     }
 
@@ -117,7 +117,7 @@ object NetworkDiagnostics {
         val started = System.currentTimeMillis()
         Socket().use { socket ->
             socket.connect(InetSocketAddress(host, port), 4000)
-            return "Host: $host\\nPort: $port\\nTCP: OPEN\\nTime: \${System.currentTimeMillis() - started} ms"
+            return "Host: $host\nPort: $port\nTCP: OPEN\nTime: ${System.currentTimeMillis() - started} ms"
         }
     }
 }
