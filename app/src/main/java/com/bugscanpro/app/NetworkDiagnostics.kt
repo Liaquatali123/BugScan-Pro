@@ -20,8 +20,8 @@ object NetworkDiagnostics {
         val mask = (0xFFFFFFFFL shl (32 - prefix)) and 0xFFFFFFFFL
         val network = first and mask
         val a = ((network shr 24) and 255).toInt()
-        val isPrivate = a == 10 || (a == 172 && ((network shr 16) and 255) in 16..31) ||
-            (a == 192 && ((network shr 16) and 255) == 168)
+        val isPrivate = a == 10 || (a == 172 && ((network shr 16) and 255L) in 16L..31L) ||
+            (a == 192 && ((network shr 16) and 255L) == 168L)
         require(isPrivate) { "Only RFC1918 private IPv4 ranges are supported." }
         val count = (1L shl (32 - prefix)).toInt()
         val lines = mutableListOf<String>()
