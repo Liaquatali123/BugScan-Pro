@@ -105,7 +105,7 @@ private fun BugScanApp() {
                     when (tab) {
                         "CIDR" -> {
                             InputField("Private IPv4 CIDR (maximum /24)", cidr) { cidr = it }
-                            Text("Only RFC1918 private ranges are accepted. Host discovery probes TCP 80/443; maximum 256 addresses.", color = Muted, fontSize = 12.sp)
+                            Text("Only RFC1918 private ranges are accepted. Parallel TCP 80/443 discovery supports /16 to /30 (up to 65,534 hosts). Works on reachable local networks; no external API required.", color = Muted, fontSize = 12.sp)
                         }
                         "HTTP" -> {
                             InputField("Hostname or URL", host) { host = it }
@@ -137,7 +137,7 @@ private fun BugScanApp() {
                                     val result = withContext(Dispatchers.IO) {
                                         runCatching {
                                             when (tab) {
-                                                "CIDR" -> NetworkDiagnostics.scanPrivateCidr(cidr)
+                                                "CIDR" -> NetworkDiagnostics.scanPrivateCidr(cidr) { progress -> output = progress }
                                                 "HTTP" -> NetworkDiagnostics.checkHttp(host)
                                                 "SNI" -> NetworkDiagnostics.checkTls(sni)
                                                 "Ports" -> NetworkDiagnostics.checkPort(host, port.toInt())
